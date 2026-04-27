@@ -1,0 +1,73 @@
+name: Sync legacy repository
+description: Create or update a pull request in another repository with functional changes from a legacy repository.
+author: nogueiraaoki
+
+inputs:
+  target-owner:
+    description: GitHub owner or organization that owns the target repository.
+    required: true
+  target-repo:
+    description: Target repository name.
+    required: true
+  target-base-branch:
+    description: Base branch in the target repository.
+    required: false
+    default: main
+  sync-branch:
+    description: Branch created or updated in the target repository.
+    required: false
+    default: sync/from-legacy
+  source-path:
+    description: Path to the already checked out source repository.
+    required: false
+    default: .
+  allowed-differences:
+    description: Comma-separated path prefixes that should not be synced.
+    required: false
+    default: .k8s/,charts/,.github/workflows/
+  pr-title:
+    description: Title for the synchronization pull request.
+    required: false
+    default: Sync from legacy
+  pr-label:
+    description: Label added to the synchronization pull request.
+    required: false
+    default: sync-from-legacy
+  commit-message:
+    description: Commit message used in the target repository sync branch.
+    required: false
+    default: Sync functional changes from legacy
+  full-sync:
+    description: When true, sync all tracked functional files instead of only files changed by the triggering event.
+    required: false
+    default: "false"
+
+outputs:
+  sync-needed:
+    description: Whether the action found functional changes to sync.
+    value: ${{ steps.sync.outputs.sync-needed }}
+  pr-url:
+    description: URL of the created or updated pull request.
+    value: ${{ steps.sync.outputs.pr-url }}
+  target-branch:
+    description: Branch created or updated in the target repository.
+    value: ${{ steps.sync.outputs.target-branch }}
+
+runs:
+  using: composite
+  steps:
+    - name: Sync to target repository
+      id: sync
+      shell: bash
+      env:
+        INPUT_TARGET_OWNER: ${{ inputs.target-owner }}
+        INPUT_TARGET_REPO: ${{ inputs.target-repo }}
+        INPUT_TARGET_BASE_BRANCH: ${{ inputs.target-base-branch }}
+        INPUT_SYNC_BRANCH: ${{ inputs.sync-branch }}
+        INPUT_SOURCE_PATH: ${{ inputs.source-path }}
+        INPUT_ALLOWED_DIFFERENCES: ${{ inputs.allowed-differences }}
+        INPUT_PR_TITLE: ${{ inputs.pr-title }}
+        INPUT_PR_LABEL: ${{ inputs.pr-label }}
+        INPUT_COMMIT_MESSAGE: ${{ inputs.commit-message }}
+        INPUT_FULL_SYNC: ${{ inputs.full-sync }}
+      run: ${{ github.action_path }}/scripts/sync.sh
