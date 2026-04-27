@@ -17,8 +17,9 @@ The action:
 2. skips configured allowed-difference paths
 3. clones the target repository
 4. copies changed functional files and removes deleted functional files
-5. pushes a sync branch to the target repository
-6. creates or updates a pull request with origin metadata
+5. leaves target-only files untouched
+6. pushes a sync branch to the target repository
+7. creates or updates a pull request with origin metadata
 
 ## Requirements
 
@@ -82,7 +83,7 @@ If the source repository is `org-a/legacy-repo` and the target repository is `or
     target-owner: org-b
     target-repo: new-repo
     sync-branch: sync/from-legacy
-    allowed-differences: ".k8s/,charts/,.github/workflows/"
+          allowed-differences: ".k8s/,charts/,.github/workflows/sync-to-new.yml,.github/workflows/new-only-ci.yml"
   env:
     GH_TOKEN: ${{ secrets.NEW_REPO_PAT }}
 ```
@@ -96,7 +97,9 @@ Destino-Repo: org-b/new-repo
 
 ## Manual full sync
 
-`workflow_dispatch` runs a full functional sync by default. You can also force full sync from any event:
+By default, `workflow_dispatch` behaves like an incremental sync for the checked out commit. It does not copy every legacy file into the target repository.
+
+You can force a full sync explicitly:
 
 ```yaml
 - uses: nogueiraaoki/sync-legacy-action@v1
@@ -117,7 +120,7 @@ Destino-Repo: org-b/new-repo
 | `target-base-branch` | no | `main` | Base branch in the target repository. |
 | `sync-branch` | no | `sync/from-legacy` | Branch created or updated in the target repository. |
 | `source-path` | no | `.` | Path to the checked out source repository. |
-| `allowed-differences` | no | `.k8s/,charts/,.github/workflows/` | Comma-separated prefixes that should not be synced. |
+| `allowed-differences` | no | `.k8s/,charts/,.github/workflows/` | Comma-separated ignored paths. Entries ending in `/` ignore a directory prefix; other entries ignore one exact file path. |
 | `pr-title` | no | `Sync from legacy` | Pull request title. |
 | `pr-label` | no | `sync-from-legacy` | Pull request label. Use an empty value to skip labels. |
 | `commit-message` | no | `Sync functional changes from legacy` | Commit message used on the target sync branch. |
@@ -137,3 +140,4 @@ Destino-Repo: org-b/new-repo
 - Use `fetch-depth: 0` so the action can diff commits correctly.
 - The target repository can be private or public as long as `GH_TOKEN` has access.
 - The action does not merge the PR. Review and merge stay manual.
+- Target-only files remain in the target repository. The action only applies legacy changes that are not ignored.

@@ -22,7 +22,7 @@ inputs:
     required: false
     default: .
   allowed-differences:
-    description: Comma-separated path prefixes that should not be synced.
+    description: Comma-separated ignored paths. Entries ending in / ignore a directory prefix; other entries ignore one exact file path.
     required: false
     default: .k8s/,charts/,.github/workflows/
   pr-title:
@@ -38,7 +38,7 @@ inputs:
     required: false
     default: Sync functional changes from legacy
   full-sync:
-    description: When true, sync all tracked functional files instead of only files changed by the triggering event.
+    description: When true, sync all tracked non-ignored source files. Keep false for normal incremental sync.
     required: false
     default: "false"
 

@@ -71,7 +71,7 @@ FUNCTIONAL_DELETED="$WORKDIR/functional-deleted.txt"
 COMMITS_FILE="$WORKDIR/commits.txt"
 TARGET_DIR="$WORKDIR/target"
 
-if [ "$FULL_SYNC" = "true" ] || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+if [ "$FULL_SYNC" = "true" ]; then
   git -C "$SOURCE_PATH" ls-files > "$CHANGED_FILES"
   : > "$DELETED_FILES"
   git -C "$SOURCE_PATH" log -1 --format=%H "$HEAD_SHA" > "$COMMITS_FILE"
@@ -92,9 +92,13 @@ is_allowed_difference() {
     pattern="${pattern#"${pattern%%[![:space:]]*}"}"
     pattern="${pattern%"${pattern##*[![:space:]]}"}"
     [ -n "$pattern" ] || continue
-    case "$file" in
-      "$pattern"*|"$pattern") return 0 ;;
-    esac
+    if [[ "$pattern" == */ ]]; then
+      case "$file" in
+        "$pattern"*) return 0 ;;
+      esac
+    elif [ "$file" = "$pattern" ]; then
+      return 0
+    fi
   done
   return 1
 }
